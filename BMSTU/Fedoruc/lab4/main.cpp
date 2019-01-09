@@ -23,12 +23,26 @@ void GenerateElipsoid (
     }
 }
 
-void GenerateSpheres(std::vector<std::vector<double>> *points,
-                     double x1, double y1, double r1,
-                     double x2, double y2, double r2,
-                     double step){
+void GenerateSphere(
+        std::vector<std::vector<double>> *points,
+        double x, double y, 
+        double r, double step)
+{
+    x = (x < 0) ? -x : x;
+    y = (y < 0) ? -y : y;
 
+    for (double xx = -x - r; xx <= x + r; xx += step) {
+        for (double yy = -y - r; yy <= y + r; yy += step) {
+            if (pow(xx - x, 2) + pow(yy - y, 2) <= pow(r, 2)){ 
+                std::vector<double> v(2);
+                v[0] = xx;
+                v[1] = yy;
+                points->emplace_back(std::move(v));
+            }
+        }
+    }
 }
+
 // ---------------------------------------------------------------------------------------
 void SaveTrainSetToFile(std::ostream &output, const std::vector<std::vector<double>> &points) {
     for (size_t iPoint = 0; iPoint < points.size(); ++iPoint) {
@@ -40,7 +54,11 @@ void SaveTrainSetToFile(std::ostream &output, const std::vector<std::vector<doub
 
 int main() {
     std::vector<std::vector<double>> trainSet;
-    GenerateElipsoid (&trainSet, 1., 0.5, 0., 0., 0., 0.05);
+    //GenerateElipsoid (&trainSet, 1., 0.5, 0., 0., 0., 0.05);
+    GenerateSphere (&trainSet, 1., 2., 1., 0.1);
+    GenerateSphere (&trainSet, 3., 1., 0.5, 0.1);
+    //std::random_shuffle(trainSet.begin(), trainSet.end());
+
     NetSOM  net;
     NetSOM::NetConfig netConf;
 
@@ -48,7 +66,7 @@ int main() {
     netConf.inVecDim = 2;
     netConf.trainEpochs = 10.;
     netConf.preTrainIterations = netConf.neurons;
-    netConf.minPotential = 0.25;
+    netConf.minPotential = 0.75;
     netConf.deltaMinFuncEps = 1e-3;
 
     netConf.sigmaInitPreTrain = 2.1;
@@ -60,8 +78,8 @@ int main() {
     netConf.sigmaInitMin = 1e-1;
     netConf.etaInit = 0.5;
     netConf.etaInitMin = 1e-3;
-    netConf.weightLowBound   = -1.;
-    netConf.weightUpperBound =  1.;
+    netConf.weightLowBound   = 0.;
+    netConf.weightUpperBound = 4.;
 
     netConf.weightFileName = std::string("weight.data");
 
@@ -72,7 +90,9 @@ int main() {
     std::ofstream gnuplotFile("plot.txt", std::ios::trunc);
 
     SaveTrainSetToFile(trainSetFile, trainSet);
+    //exit(1);
     net.TrainGas(trainSet, weightFile);
+    //net.TrainKohen(trainSet, weightFile);
     net.CreateGnuplotAnimation(gnuplotFile);
     std::cerr << "End of training " << std::endl;
 }

@@ -49,5 +49,6 @@ private:
     void AdjustWeightsKohen(size_t winnerInd, const std::vector<double> &inVec);
     void AdjustWeightsGas(const std::vector<double> &inVec);
     void AdjustPotential(size_t winnerInd);
+    void AdjustPotentialInverted(size_t winnerInd);
     size_t GetIndexInNeuronsNeighbourSequence(size_t neuronNumber);
 };

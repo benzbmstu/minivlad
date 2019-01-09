@@ -68,13 +68,14 @@ size_t NetSOM::DetectWinnerGas(const std::vector<double> &inVec) {
             distancesToInput[iNeuron].first = potential[iNeuron] * sqrt(distancesToInput[iNeuron].first);
         
         //distancesToInput[iNeuron].first  = sqrt(distancesToInput[iNeuron].first);
+        //distancesToInput[iNeuron].first = potential[iNeuron] * sqrt(distancesToInput[iNeuron].first);
         distancesToInput[iNeuron].second = iNeuron;
     }
     //print unsorted array
-    std::cout << "-UNSORTED distances" << std::endl;
+    /*std::cout << "-UNSORTED distances" << std::endl;
     for (size_t i = 0; i < distancesToInput.size(); ++i)
       std::cout << distancesToInput[i].first << " " << distancesToInput[i].second << std::endl;
-
+    */
     // sort distances
     std::sort(distancesToInput.begin(), distancesToInput.end(), compare);
 
@@ -145,6 +146,14 @@ void NetSOM::AdjustPotential(size_t winnerInd) {
     for (size_t iPotential = 0; iPotential < potential.size(); iPotential++) {
         (iPotential == winnerInd) ? potential[iPotential] -= netConfig.minPotential
                                   : potential[iPotential] += 1. / netConfig.neurons;
+        std::cout << potential[iPotential] << std::endl;
+    }
+    std::cout << std::endl;
+}
+void NetSOM::AdjustPotentialInverted(size_t winnerInd) {
+    std::cout << std::endl << "Список потенциалов:" << std::endl;
+    for (size_t iPotential = 0; iPotential < potential.size(); iPotential++) {
+        (iPotential == winnerInd) ? potential[iPotential] += 1. / netConfig.neurons : potential[iPotential] -= netConfig.minPotential;
         std::cout << potential[iPotential] << std::endl;
     }
     std::cout << std::endl;
@@ -247,12 +256,12 @@ void NetSOM::PrintWeightsToFile(std::ostream &output, int precision) {
 void NetSOM::CreateGnuplotAnimation(std::ofstream &stream) {
     stream << " set terminal gif size 1024, 768 animate delay 0.001 loop -1 "<< std::endl
               << " set output 'train.gif' "<< std::endl
-              << " set xrange [-1:1] "<< std::endl
-              << " set yrange [-1:1] "<< std::endl
+              << " set xrange [0:4] "<< std::endl
+              << " set yrange [0:4] "<< std::endl
               << " unset key "<< std::endl              
               << " stats \'" << netConfig.weightFileName << "\' nooutput  "<< std::endl
               << " do for [i=1:int(STATS_blocks)-1] { "<< std::endl
-              << "     plot \"points.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
+              << "     plot \"train.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
     for (size_t iNeuron = 0; iNeuron < netConfig.neurons - 1; iNeuron++) {
         stream << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1
@@ -273,12 +282,12 @@ void NetSOM::CreateGnuplotAnimation(std::ofstream &stream) {
     file.open("finalpos.txt", std::ios::trunc);
     file << " set terminal gif size 1024, 768 animate delay 0.001 loop -1 "<< std::endl
               << " set output 'final.gif' "<< std::endl
-              << " set xrange [-1:1] "<< std::endl
-              << " set yrange [-1:1] "<< std::endl
+              << " set xrange [0:4] "<< std::endl
+              << " set yrange [0:4] "<< std::endl
               << " unset key "<< std::endl              
               << " stats 'weight.data' nooutput  "<< std::endl
               << " do for [i=int(STATS_blocks)-1:int(STATS_blocks)-1] { "<< std::endl
-              << "     plot \"points.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
+              << "     plot \"train.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
     for (size_t iNeuron = 0; iNeuron < netConfig.neurons - 1; iNeuron++) {
         file << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1
@@ -299,12 +308,12 @@ void NetSOM::CreateGnuplotAnimation(std::ofstream &stream) {
     fileStart.open("startpos.txt", std::ios::trunc);
     fileStart << " set terminal gif size 1024, 768 animate delay 0.001 loop -1 "<< std::endl
               << " set output 'startpos.gif' "<< std::endl
-              << " set xrange [-1:1] "<< std::endl
-              << " set yrange [-1:1] "<< std::endl
+              << " set xrange [0:4] "<< std::endl
+              << " set yrange [0:4] "<< std::endl
               << " unset key "<< std::endl              
               << " stats 'weight.data' nooutput  "<< std::endl
               << " do for [i=1:1] { "<< std::endl
-              << "     plot \"points.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
+              << "     plot \"train.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
     for (size_t iNeuron = 0; iNeuron < netConfig.neurons - 1; iNeuron++) {
         fileStart << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1
@@ -326,12 +335,12 @@ void NetSOM::CreateGnuplotAnimation(std::ofstream &stream) {
     int outIter = netConfig.preTrainIterations;
     filePreTrain << " set terminal gif size 1024, 768 animate delay 0.001 loop -1 "<< std::endl
               << " set output 'afterPreTrain.gif' "<< std::endl
-              << " set xrange [-1:1] "<< std::endl
-              << " set yrange [-1:1] "<< std::endl
+              << " set xrange [0:4] "<< std::endl
+              << " set yrange [0:4] "<< std::endl
               << " unset key "<< std::endl              
               << " stats 'weight.data' nooutput  "<< std::endl
               << " do for [i=" << outIter << ":" << outIter <<"] { "<< std::endl
-              << "     plot \"points.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
+              << "     plot \"train.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
     for (size_t iNeuron = 0; iNeuron < netConfig.neurons - 1; iNeuron++) {
         filePreTrain << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1
