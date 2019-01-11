@@ -59,13 +59,13 @@ int main() {
     GenerateSphere (&trainSet, 3., 1., 0.5, 0.1);
     //std::random_shuffle(trainSet.begin(), trainSet.end());
 
-    NetSOM  net;
-    NetSOM::NetConfig netConf;
+    Net  net;
+    Net::NetConfig netConf;
 
     netConf.neurons  = 16;
     netConf.inVecDim = 2;
     netConf.trainEpochs = 10.;
-    netConf.preTrainIterations = netConf.neurons;
+    netConf.preTrainIterations = 64;
     netConf.minPotential = 0.75;
     netConf.deltaMinFuncEps = 1e-3;
 
