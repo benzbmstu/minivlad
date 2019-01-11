@@ -1,0 +1,96 @@
+\section{Лабораторная работа 2 (вариант 57)}
+\subsection{Задание}
+
+Ферзь находится на поле D1 шахматной доски. Необходимо найти последовательность из пяти ходов, обеспечивающую прохождение ферзем максимального количества полей доски. При этом ферзь не имеет права останавливаться на любом поле более одного раза и пересекать уже пройденный маршрут последующими ходами.
+
+\subsection{Иходный код}
+\begin{verbatim}
+     1  %?- target(S1,S2,S3,S4,S5).
+     2  %create list of fields between X/Y and X1/Y1
+     3  range(X/Y, X/Y, [X/Y]).
+     4  range(X/Y, X1/Y1, [X/Y|T]):- X<X1, Y<Y1, X2 is X+1, Y2 is Y+1, range(X2/
+Y2, X1/Y1, T).
+     5  range(X/Y, X1/Y1, [X/Y|T]):- X<X1, Y>Y1, X2 is X+1, Y2 is Y-1, range(X2/
+Y2, X1/Y1, T).
+     6  range(X/Y, X1/Y1, [X/Y|T]):- X>X1, Y<Y1, X2 is X-1, Y2 is Y+1, range(X2/
+Y2, X1/Y1, T).
+     7  range(X/Y, X1/Y1, [X/Y|T]):- X>X1, Y>Y1, X2 is X-1, Y2 is Y-1, range(X2/
+Y2, X1/Y1, T).
+     8  range(X/Y, X1/Y1, [X/Y|T]):- X=X1, Y<Y1, X2 is X,   Y2 is Y+1, range(X2/
+Y2, X1/Y1, T).
+     9  range(X/Y, X1/Y1, [X/Y|T]):- X=X1, Y>Y1, X2 is X,   Y2 is Y-1, range(X2/
+Y2, X1/Y1, T).
+    10  range(X/Y, X1/Y1, [X/Y|T]):- X<X1, Y=Y1, X2 is X+1, Y2 is Y,   range(X2/
+Y2, X1/Y1, T).
+    11  range(X/Y, X1/Y1, [X/Y|T]):- X>X1, Y=Y1, X2 is X-1, Y2 is Y,   range(X2/
+Y2, X1/Y1, T).
+    12   
+    13  %check whether X/Y is on board
+    14  onboard(X/Y) :-
+    15     0 < X, X < 9, 0 < Y, Y < 9.
+    16   
+    17  %integer is direction number (1-8), N is distance
+    18  step(X/Y, X1/Y1, 1, N) :- X1 is X,     Y1 is Y + N, onboard(X/Y), onboar
+d(X1/Y1).
+    19  step(X/Y, X1/Y1, 2, N) :- X1 is X,     Y1 is Y - N, onboard(X/Y), onboar
+d(X1/Y1).
+    20  step(X/Y, X1/Y1, 3, N) :- X1 is X + N, Y1 is Y,     onboard(X/Y), onboar
+d(X1/Y1).
+    21  step(X/Y, X1/Y1, 4, N) :- X1 is X - N, Y1 is Y,     onboard(X/Y), onboar
+d(X1/Y1).
+    22  step(X/Y, X1/Y1, 5, N) :- X1 is X + N, Y1 is Y + N, onboard(X/Y), onboar
+d(X1/Y1).
+    23  step(X/Y, X1/Y1, 6, N) :- X1 is X + N, Y1 is Y - N, onboard(X/Y), onboar
+d(X1/Y1).
+    24  step(X/Y, X1/Y1, 7, N) :- X1 is X - N, Y1 is Y + N, onboard(X/Y), onboar
+d(X1/Y1).
+    25  step(X/Y, X1/Y1, 8, N) :- X1 is X - N, Y1 is Y - N, onboard(X/Y), onboar
+d(X1/Y1).
+    26   
+    27  %8 directions are available
+    28  direction(1).
+    29  direction(2).
+    30  direction(3).
+    31  direction(4).
+    32  direction(5).
+    33  direction(6).
+    34  direction(7).
+    35  direction(8).
+    36   
+    37  %list all step variants
+    38  variants([]).
+    39  variants([H|T]) :-
+    40     direction(H),
+    41     variants(T).
+    42   
+    43  %N is distance
+    44  %S is list of crossed fields
+    45  queenstep(X/Y, X1/Y1, N, S):-
+    46     variants([M,N]),
+    47     step(X/Y, X1/Y1, M, N),
+    48     range(X/Y, X1/Y1, S).
+    49   
+    50  uniq(Data,Uniques) :- sort(Data,Uniques).
+    51   
+    52  queenpath(X/Y, X1/Y1, X2/Y2, X3/Y3, X4/Y4, X5/Y5, L, S):-
+    53     queenstep(X/Y,   X1/Y1, DL1, S1),
+    54     queenstep(X1/Y1, X2/Y2, DL2, S2),
+    55     queenstep(X2/Y2, X3/Y3, DL3, S3),
+    56     queenstep(X3/Y3, X4/Y4, DL4, S4),
+    57     queenstep(X4/Y4, X5/Y5, DL5, S5),
+    58     L is DL1+DL2+DL3+DL4+DL5,
+    59     append(S1, S2, T1),
+    60     append(T1, S3, T2),
+    61     append(T2, S4, T3),
+    62     append(T3, S5, S6),
+    63     uniq(S6, S),
+    64     length(S, LTmp),
+    65     LCalc is LTmp - 1,
+    66     L = LCalc.
+    67   
+    68  target(X1/Y1, X2/Y2, X3/Y3, X4/Y4, X5/Y5):-
+    69     queenpath(4/1, X1/Y1, X2/Y2, X3/Y3, X4/Y4, X5/Y5, 15, _).
+    70
+
+
+\end{verbatim}
