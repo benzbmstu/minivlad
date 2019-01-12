@@ -1,0 +1,5 @@
+set terminal jpeg
+set output 'points.jpeg'
+set xrange [-0.5:1]
+set yrange [-0.1:1]
+plot 'points.data' using 1:2

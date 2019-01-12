@@ -3,7 +3,7 @@
 #include <fstream>
 using size_t = std::size_t;
 
-class NetSOM {
+class Net {
 public:
     struct NetConfig {
         size_t neurons;
@@ -38,7 +38,7 @@ public:
     size_t DetectWinnerGas(const std::vector<double> &inVec);
 
 private:
-    NetConfig netConfig;
+    NetConfig config;
     std::vector<double>   weights;
     std::vector<double>   potential;
     std::vector<int>      neuronsNeighbourSequence; // for DetectWinnerKohen
@@ -49,5 +49,6 @@ private:
     void AdjustWeightsKohen(size_t winnerInd, const std::vector<double> &inVec);
     void AdjustWeightsGas(const std::vector<double> &inVec);
     void AdjustPotential(size_t winnerInd);
+    void AdjustPotentialInverted(size_t winnerInd);
     size_t GetIndexInNeuronsNeighbourSequence(size_t neuronNumber);
 };

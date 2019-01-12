@@ -1,4 +1,4 @@
-#include "NetSOM.h"
+#include "Net.h"
 #include <iomanip>
 #include <random>
 #include <algorithm>
@@ -6,44 +6,44 @@
 #include <fstream>
 #include <unistd.h>
 
-void NetSOM::Init(const NetConfig &conf) {
-    netConfig = conf;
-    weights.resize(netConfig.neurons * netConfig.inVecDim);
-    potential.resize(netConfig.neurons, netConfig.minPotential);
-    neuronsNeighbourSequence.resize(netConfig.neurons, 0);
-    victory.resize(netConfig.neurons, 0);
+void Net::Init(const NetConfig &conf) {
+    config = conf;
+    weights.resize(config.neurons * config.inVecDim);
+    potential.resize(config.neurons, config.minPotential);
+    neuronsNeighbourSequence.resize(config.neurons, 0);
+    victory.resize(config.neurons, 0);
     RandomWeights();
 }
 bool compare(const std::pair<double, double>&i, const std::pair<double, double>&j){ 
     return i.first < j.first; 
 }
 // ------------------------------------------------------------------------------------------------
-void NetSOM::RandomWeights() {
+void Net::RandomWeights() {
     std::random_device randomizer;
     std::mt19937 randGen(randomizer());
-    std::uniform_real_distribution<> dist(netConfig.weightLowBound, 
-                                          netConfig.weightUpperBound);
+    std::uniform_real_distribution<> dist(config.weightLowBound, 
+                                          config.weightUpperBound);
     double weightNorm;
     double weight = 0.0;
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons; ++iNeuron) {
-        for (size_t iWeight = 0; iWeight < netConfig.inVecDim; ++iWeight) {
+    for (size_t iNeuron = 0; iNeuron < config.neurons; ++iNeuron) {
+        for (size_t iWeight = 0; iWeight < config.inVecDim; ++iWeight) {
             weight = dist(randGen);
             std::cerr << weight << std::endl;
-            weights[iWeight + iNeuron * netConfig.inVecDim] = weight;
+            weights[iWeight + iNeuron * config.inVecDim] = weight;
         }
     }
 }
 // ------------------------------------------------------------------------------------------------
 // returns winner index
-size_t NetSOM::DetectWinnerKohen(const std::vector<double> &inVec) {
-    std::vector<double> distancesToInput(netConfig.neurons, 0.0);
+size_t Net::DetectWinnerKohen(const std::vector<double> &inVec) {
+    std::vector<double> distancesToInput(config.neurons, 0.0);
 
     
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons; ++iNeuron) {
-        for (size_t iWeight = 0; iWeight < netConfig.inVecDim; ++iWeight) {
-            distancesToInput[iNeuron] += pow(inVec[iWeight] - weights[iWeight + iNeuron * netConfig.inVecDim], 2);        
+    for (size_t iNeuron = 0; iNeuron < config.neurons; ++iNeuron) {
+        for (size_t iWeight = 0; iWeight < config.inVecDim; ++iWeight) {
+            distancesToInput[iNeuron] += pow(inVec[iWeight] - weights[iWeight + iNeuron * config.inVecDim], 2);        
         }
-        if (potential[iNeuron] < netConfig.minPotential) {
+        if (potential[iNeuron] < config.minPotential) {
             distancesToInput[iNeuron] = std::numeric_limits<double>::max();
         } else {
             distancesToInput[iNeuron] = potential[iNeuron] * sqrt(distancesToInput[iNeuron]);
@@ -53,28 +53,29 @@ size_t NetSOM::DetectWinnerKohen(const std::vector<double> &inVec) {
     return winnerInd;
 }
 //////////////////////////////////////////////////////////////////////////////////
-size_t NetSOM::DetectWinnerGas(const std::vector<double> &inVec) {
+size_t Net::DetectWinnerGas(const std::vector<double> &inVec) {
 
-    std::vector<std::pair<double, int>>  distancesToInput (netConfig.neurons, std::pair<double, int> (0.0, 0));
+    std::vector<std::pair<double, int>>  distancesToInput (config.neurons, std::pair<double, int> (0.0, 0));
 
     // calculate distance for each neuron
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons; ++iNeuron) {
-        for (size_t iWeight = 0; iWeight < netConfig.inVecDim; ++iWeight) 
-            distancesToInput[iNeuron].first += pow(inVec[iWeight] - weights[iWeight + iNeuron * netConfig.inVecDim], 2);
+    for (size_t iNeuron = 0; iNeuron < config.neurons; ++iNeuron) {
+        for (size_t iWeight = 0; iWeight < config.inVecDim; ++iWeight) 
+            distancesToInput[iNeuron].first += pow(inVec[iWeight] - weights[iWeight + iNeuron * config.inVecDim], 2);
 
-        if (potential[iNeuron] < netConfig.minPotential)
+        if (potential[iNeuron] < config.minPotential)
             distancesToInput[iNeuron].first = std::numeric_limits<double>::max();
         else 
             distancesToInput[iNeuron].first = potential[iNeuron] * sqrt(distancesToInput[iNeuron].first);
         
         //distancesToInput[iNeuron].first  = sqrt(distancesToInput[iNeuron].first);
+        //distancesToInput[iNeuron].first = potential[iNeuron] * sqrt(distancesToInput[iNeuron].first);
         distancesToInput[iNeuron].second = iNeuron;
     }
     //print unsorted array
-    std::cout << "-UNSORTED distances" << std::endl;
+    /*std::cout << "-UNSORTED distances" << std::endl;
     for (size_t i = 0; i < distancesToInput.size(); ++i)
       std::cout << distancesToInput[i].first << " " << distancesToInput[i].second << std::endl;
-
+    */
     // sort distances
     std::sort(distancesToInput.begin(), distancesToInput.end(), compare);
 
@@ -105,52 +106,60 @@ size_t NetSOM::DetectWinnerGas(const std::vector<double> &inVec) {
     return winnerInd;
 }
 // -------------------------------------------------------------------------------------
-size_t NetSOM::GetIndexInNeuronsNeighbourSequence(size_t neuronNumber){
+size_t Net::GetIndexInNeuronsNeighbourSequence(size_t neuronNumber){
     std::vector<int>::iterator it = std::find(neuronsNeighbourSequence.begin(), 
                                               neuronsNeighbourSequence.end(), 
                                               neuronNumber);
     /*if ! (it != neuronsNeighbourSequence.end())
-        throw std::string("NetSOM::GetIndexInNeuronsNeighbourSequence --> Element Not Found!");*/
+        throw std::string("Net::GetIndexInNeuronsNeighbourSequence --> Element Not Found!");*/
 
     // Get index of element from iterator
     int index = std::distance(neuronsNeighbourSequence.begin(), it);
     return index;
 }
 // ------------------------------------------------------------------------------------------------
-void NetSOM::AdjustWeightsKohen(size_t winnerInd, const std::vector<double> &inVec) {
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons; ++iNeuron) {
-        for (size_t iWeight = 0; iWeight < netConfig.inVecDim; ++iWeight) {
+void Net::AdjustWeightsKohen(size_t winnerInd, const std::vector<double> &inVec) {
+    for (size_t iNeuron = 0; iNeuron < config.neurons; ++iNeuron) {
+        for (size_t iWeight = 0; iWeight < config.inVecDim; ++iWeight) {
 	          double d = fabs(iNeuron - winnerInd);
 	          double neigbourCoeff = exp(-pow(d / sigma, 2) / 2);
-            weights[iWeight + iNeuron * netConfig.inVecDim] += eta * neigbourCoeff 
-              * (inVec[iWeight] - weights[iWeight + iNeuron * netConfig.inVecDim]);
+            weights[iWeight + iNeuron * config.inVecDim] += eta * neigbourCoeff 
+              * (inVec[iWeight] - weights[iWeight + iNeuron * config.inVecDim]);
         }
     }
 }
 
 // ------------------------------------------------------------------------------------------------
-void NetSOM::AdjustWeightsGas(const std::vector<double> &inVec) {
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons; ++iNeuron) {
+void Net::AdjustWeightsGas(const std::vector<double> &inVec) {
+    for (size_t iNeuron = 0; iNeuron < config.neurons; ++iNeuron) {
         int m = GetIndexInNeuronsNeighbourSequence(iNeuron);
         double neigbourCoeff = exp(- m / sigma);
-        for (size_t iWeight = 0; iWeight < netConfig.inVecDim; ++iWeight) {
-            weights[iWeight + iNeuron * netConfig.inVecDim] += eta * neigbourCoeff 
-              * (inVec[iWeight] - weights[iWeight + iNeuron * netConfig.inVecDim]);
+        for (size_t iWeight = 0; iWeight < config.inVecDim; ++iWeight) {
+            weights[iWeight + iNeuron * config.inVecDim] += eta * neigbourCoeff 
+              * (inVec[iWeight] - weights[iWeight + iNeuron * config.inVecDim]);
         }
     }
 }
 // ------------------------------------------------------------------------------------------------
-void NetSOM::AdjustPotential(size_t winnerInd) {
+void Net::AdjustPotential(size_t winnerInd) {
     std::cout << std::endl << "Список потенциалов:" << std::endl;
     for (size_t iPotential = 0; iPotential < potential.size(); iPotential++) {
-        (iPotential == winnerInd) ? potential[iPotential] -= netConfig.minPotential
-                                  : potential[iPotential] += 1. / netConfig.neurons;
+        (iPotential == winnerInd) ? potential[iPotential] -= config.minPotential
+                                  : potential[iPotential] += 1. / config.neurons;
+        std::cout << potential[iPotential] << std::endl;
+    }
+    std::cout << std::endl;
+}
+void Net::AdjustPotentialInverted(size_t winnerInd) {
+    std::cout << std::endl << "Список потенциалов:" << std::endl;
+    for (size_t iPotential = 0; iPotential < potential.size(); iPotential++) {
+        (iPotential == winnerInd) ? potential[iPotential] += 1. / config.neurons : potential[iPotential] -= config.minPotential;
         std::cout << potential[iPotential] << std::endl;
     }
     std::cout << std::endl;
 }
 //--------------------------------------------------------------------------------------
-void NetSOM::TrainGas(std::vector<std::vector<double>> &trainSet,
+void Net::TrainGas(std::vector<std::vector<double>> &trainSet,
                      std::ostream &outputLabels) 
 {
     size_t winnerInd;
@@ -159,13 +168,13 @@ void NetSOM::TrainGas(std::vector<std::vector<double>> &trainSet,
     std::random_shuffle(trainSet.begin(), trainSet.end());
     PrintWeightsToFile(outputLabels, 16);
 
-    maxT = netConfig.preTrainIterations - 1; 
-    for (size_t iVec = 0; iVec < netConfig.preTrainIterations; ++iVec) {
+    maxT = config.preTrainIterations - 1; 
+    for (size_t iVec = 0; iVec < config.preTrainIterations; ++iVec) {
         double time = iVec + 1;  
-        sigma = netConfig.sigmaInitPreTrain 
-              * pow(netConfig.sigmaInitPreTrainMin / netConfig.sigmaInitPreTrain, time / maxT);
-        eta   = netConfig.etaInitPreTrain   
-              * pow(netConfig.etaInitPreTrainMin   / netConfig.etaInitPreTrain  , time / maxT);
+        sigma = config.sigmaInitPreTrain 
+              * pow(config.sigmaInitPreTrainMin / config.sigmaInitPreTrain, time / maxT);
+        eta   = config.etaInitPreTrain   
+              * pow(config.etaInitPreTrainMin   / config.etaInitPreTrain  , time / maxT);
         winnerInd = DetectWinnerGas(trainSet[iVec]);
         AdjustPotential(winnerInd);
         AdjustWeightsGas(trainSet[iVec]);
@@ -176,14 +185,14 @@ void NetSOM::TrainGas(std::vector<std::vector<double>> &trainSet,
     for (int iPot = 0; iPot < potential.size(); iPot++) {
         potential[iPot] = 1.;
     }
-    maxT = netConfig.trainEpochs * trainSet.size(); // k max = maxT, k = time
+    maxT = config.trainEpochs * trainSet.size(); // k max = maxT, k = time
     double time = 0.;
-    for (size_t iEpoch = 0; iEpoch < netConfig.trainEpochs; ++iEpoch) {
+    for (size_t iEpoch = 0; iEpoch < config.trainEpochs; ++iEpoch) {
         std::random_shuffle(trainSet.begin(), trainSet.end());
         for (size_t iVec = 0; iVec < trainSet.size(); ++iVec) {
             time++;
-            sigma = netConfig.sigmaInit * pow(netConfig.sigmaInitMin / netConfig.sigmaInit, time / maxT);
-            eta   = netConfig.etaInit   * pow(netConfig.etaInitMin   / netConfig.etaInit  , time / maxT);
+            sigma = config.sigmaInit * pow(config.sigmaInitMin / config.sigmaInit, time / maxT);
+            eta   = config.etaInit   * pow(config.etaInitMin   / config.etaInit  , time / maxT);
             winnerInd = DetectWinnerGas(trainSet[iVec]);
             //AdjustPotential(winnerInd);
             AdjustWeightsGas(trainSet[iVec]);
@@ -192,7 +201,7 @@ void NetSOM::TrainGas(std::vector<std::vector<double>> &trainSet,
     }
 }
 // ------------------------------------------------------------------------------------------------
-void NetSOM::TrainKohen(std::vector<std::vector<double>> &trainSet, 
+void Net::TrainKohen(std::vector<std::vector<double>> &trainSet, 
                         std::ostream &outputLabels) 
 {
     size_t winnerInd;
@@ -201,13 +210,13 @@ void NetSOM::TrainKohen(std::vector<std::vector<double>> &trainSet,
     std::random_shuffle(trainSet.begin(), trainSet.end());
     PrintWeightsToFile(outputLabels, 16);
 
-    maxT = netConfig.preTrainIterations - 1; 
-    for (size_t iVec = 0; iVec < netConfig.preTrainIterations; ++iVec) {
+    maxT = config.preTrainIterations - 1; 
+    for (size_t iVec = 0; iVec < config.preTrainIterations; ++iVec) {
         double time = iVec + 1;       
-        sigma = (netConfig.sigmaInitPreTrainMin - netConfig.sigmaInitPreTrain) 
-              / (netConfig.preTrainIterations - 1) * (time - 1) + netConfig.sigmaInitPreTrain;
-        eta   = (netConfig.etaInitPreTrainMin   - netConfig.etaInitPreTrain)   
-              / (netConfig.preTrainIterations - 1) * (time - 1) + netConfig.etaInitPreTrain;
+        sigma = (config.sigmaInitPreTrainMin - config.sigmaInitPreTrain) 
+              / (config.preTrainIterations - 1) * (time - 1) + config.sigmaInitPreTrain;
+        eta   = (config.etaInitPreTrainMin   - config.etaInitPreTrain)   
+              / (config.preTrainIterations - 1) * (time - 1) + config.etaInitPreTrain;
         
         winnerInd = DetectWinnerKohen(trainSet[iVec]);
         AdjustPotential(winnerInd);
@@ -218,14 +227,14 @@ void NetSOM::TrainKohen(std::vector<std::vector<double>> &trainSet,
     for (int iPot = 0; iPot < potential.size(); iPot++) {
         potential[iPot] = 1.;
     }
-    maxT = netConfig.trainEpochs * trainSet.size(); // k max, k = time
+    maxT = config.trainEpochs * trainSet.size(); // k max, k = time
     double time = 0.;
-    for (size_t iEpoch = 0; iEpoch < netConfig.trainEpochs; ++iEpoch) {
+    for (size_t iEpoch = 0; iEpoch < config.trainEpochs; ++iEpoch) {
         std::random_shuffle(trainSet.begin(), trainSet.end());
         for (size_t iVec = 0; iVec < trainSet.size(); ++iVec) {
             time++;
-            sigma = (netConfig.sigmaInitMin - netConfig.sigmaInit) / (maxT - 1) * (time - 1) + netConfig.sigmaInit;
-            eta   = (netConfig.etaInitMin - netConfig.etaInit)     / (maxT - 1) * (time - 1) + netConfig.etaInit;
+            sigma = (config.sigmaInitMin - config.sigmaInit) / (maxT - 1) * (time - 1) + config.sigmaInit;
+            eta   = (config.etaInitMin - config.etaInit)     / (maxT - 1) * (time - 1) + config.etaInit;
             
             winnerInd = DetectWinnerKohen(trainSet[iVec]);
             AdjustWeightsKohen(winnerInd, trainSet[iVec]);
@@ -234,38 +243,38 @@ void NetSOM::TrainKohen(std::vector<std::vector<double>> &trainSet,
     }
 }
 // ------------------------------------------------------------------------------------------------
-void NetSOM::PrintWeightsToFile(std::ostream &output, int precision) {
+void Net::PrintWeightsToFile(std::ostream &output, int precision) {
     for (size_t iWeight = 0; iWeight < weights.size(); ++iWeight) {
         output << std::setprecision(precision) << weights[iWeight] << "\t";
         if (iWeight % 2) {
-            output << iWeight / netConfig.inVecDim << "\t";
+            output << iWeight / config.inVecDim << "\t";
         }
     }
     output << std::endl << std::endl << std::endl;
 }
 // ------------------------------------------------------------------------------------------------
-void NetSOM::CreateGnuplotAnimation(std::ofstream &stream) {
+void Net::CreateGnuplotAnimation(std::ofstream &stream) {
     stream << " set terminal gif size 1024, 768 animate delay 0.001 loop -1 "<< std::endl
               << " set output 'train.gif' "<< std::endl
-              << " set xrange [-1:1] "<< std::endl
-              << " set yrange [-1:1] "<< std::endl
+              << " set xrange [0:4] "<< std::endl
+              << " set yrange [0:4] "<< std::endl
               << " unset key "<< std::endl              
-              << " stats \'" << netConfig.weightFileName << "\' nooutput  "<< std::endl
+              << " stats \'" << config.weightFileName << "\' nooutput  "<< std::endl
               << " do for [i=1:int(STATS_blocks)-1] { "<< std::endl
-              << "     plot \"points.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons - 1; iNeuron++) {
-        stream << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
+              << "     plot \"train.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'black\',\\"<< std::endl;
+    for (size_t iNeuron = 0; iNeuron < config.neurons - 1; iNeuron++) {
+        stream << "      \"" << config.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1
                << "  pt 7 ps 5 lc rgb \'orange\',\\"<< std::endl;
-        stream << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
+        stream << "      \"" << config.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1 << ":" << (iNeuron+1)*3
                << "  with labels,\\"<< std::endl;
     }
-    stream << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
-           <<  (netConfig.neurons)*3 - 2 << ":" << (netConfig.neurons)*3 - 1
+    stream << "      \"" << config.weightFileName <<"\" index(i-1) using " 
+           <<  (config.neurons)*3 - 2 << ":" << (config.neurons)*3 - 1
            << "  pt 7 ps 5 lc rgb \'orange\',\\"<< std::endl;
-    stream << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
-           <<  (netConfig.neurons)*3 - 2 << ":" << (netConfig.neurons)*3 - 1 << ":" << (netConfig.neurons)*3
+    stream << "      \"" << config.weightFileName <<"\" index(i-1) using " 
+           <<  (config.neurons)*3 - 2 << ":" << (config.neurons)*3 - 1 << ":" << (config.neurons)*3
            << "  with labels\\"<< std::endl;
     stream << "}" << std::endl;
 
@@ -273,25 +282,25 @@ void NetSOM::CreateGnuplotAnimation(std::ofstream &stream) {
     file.open("finalpos.txt", std::ios::trunc);
     file << " set terminal gif size 1024, 768 animate delay 0.001 loop -1 "<< std::endl
               << " set output 'final.gif' "<< std::endl
-              << " set xrange [-1:1] "<< std::endl
-              << " set yrange [-1:1] "<< std::endl
+              << " set xrange [0:4] "<< std::endl
+              << " set yrange [0:4] "<< std::endl
               << " unset key "<< std::endl              
               << " stats 'weight.data' nooutput  "<< std::endl
               << " do for [i=int(STATS_blocks)-1:int(STATS_blocks)-1] { "<< std::endl
-              << "     plot \"points.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons - 1; iNeuron++) {
-        file << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
+              << "     plot \"train.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'black\',\\"<< std::endl;
+    for (size_t iNeuron = 0; iNeuron < config.neurons - 1; iNeuron++) {
+        file << "      \"" << config.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1
                << "  pt 7 ps 5 lc rgb \'orange\',\\"<< std::endl;
-        file << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
+        file << "      \"" << config.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1 << ":" << (iNeuron+1)*3
                << "  with labels,\\"<< std::endl;
     }
-    file << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
-           <<  (netConfig.neurons)*3 - 2 << ":" << (netConfig.neurons)*3 - 1
+    file << "      \"" << config.weightFileName <<"\" index(i-1) using " 
+           <<  (config.neurons)*3 - 2 << ":" << (config.neurons)*3 - 1
            << "  pt 7 ps 5 lc rgb \'orange\',\\"<< std::endl;
-    file << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
-           <<  (netConfig.neurons)*3 - 2 << ":" << (netConfig.neurons)*3 - 1 << ":" << (netConfig.neurons)*3
+    file << "      \"" << config.weightFileName <<"\" index(i-1) using " 
+           <<  (config.neurons)*3 - 2 << ":" << (config.neurons)*3 - 1 << ":" << (config.neurons)*3
            << "  with labels\\"<< std::endl;
     file << "}" << std::endl;
 
@@ -299,52 +308,52 @@ void NetSOM::CreateGnuplotAnimation(std::ofstream &stream) {
     fileStart.open("startpos.txt", std::ios::trunc);
     fileStart << " set terminal gif size 1024, 768 animate delay 0.001 loop -1 "<< std::endl
               << " set output 'startpos.gif' "<< std::endl
-              << " set xrange [-1:1] "<< std::endl
-              << " set yrange [-1:1] "<< std::endl
+              << " set xrange [0:4] "<< std::endl
+              << " set yrange [0:4] "<< std::endl
               << " unset key "<< std::endl              
               << " stats 'weight.data' nooutput  "<< std::endl
               << " do for [i=1:1] { "<< std::endl
-              << "     plot \"points.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons - 1; iNeuron++) {
-        fileStart << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
+              << "     plot \"train.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'black\',\\"<< std::endl;
+    for (size_t iNeuron = 0; iNeuron < config.neurons - 1; iNeuron++) {
+        fileStart << "      \"" << config.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1
                << "  pt 7 ps 5 lc rgb \'orange\',\\"<< std::endl;
-        fileStart << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
+        fileStart << "      \"" << config.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1 << ":" << (iNeuron+1)*3
                << "  with labels,\\"<< std::endl;
     }
-    fileStart << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
-           <<  (netConfig.neurons)*3 - 2 << ":" << (netConfig.neurons)*3 - 1
+    fileStart << "      \"" << config.weightFileName <<"\" index(i-1) using " 
+           <<  (config.neurons)*3 - 2 << ":" << (config.neurons)*3 - 1
            << "  pt 7 ps 5 lc rgb \'orange\',\\"<< std::endl;
-    fileStart << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
-           <<  (netConfig.neurons)*3 - 2 << ":" << (netConfig.neurons)*3 - 1 << ":" << (netConfig.neurons)*3
+    fileStart << "      \"" << config.weightFileName <<"\" index(i-1) using " 
+           <<  (config.neurons)*3 - 2 << ":" << (config.neurons)*3 - 1 << ":" << (config.neurons)*3
            << "  with labels\\"<< std::endl;
     fileStart << "}" << std::endl;
 
     std::ofstream filePreTrain;
     filePreTrain.open("afterPreTrain.txt", std::ios::trunc);
-    int outIter = netConfig.preTrainIterations;
+    int outIter = config.preTrainIterations;
     filePreTrain << " set terminal gif size 1024, 768 animate delay 0.001 loop -1 "<< std::endl
               << " set output 'afterPreTrain.gif' "<< std::endl
-              << " set xrange [-1:1] "<< std::endl
-              << " set yrange [-1:1] "<< std::endl
+              << " set xrange [0:4] "<< std::endl
+              << " set yrange [0:4] "<< std::endl
               << " unset key "<< std::endl              
               << " stats 'weight.data' nooutput  "<< std::endl
               << " do for [i=" << outIter << ":" << outIter <<"] { "<< std::endl
-              << "     plot \"points.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'red\',\\"<< std::endl;
-    for (size_t iNeuron = 0; iNeuron < netConfig.neurons - 1; iNeuron++) {
-        filePreTrain << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
+              << "     plot \"train.data\" index 0 using 1:2 pt 7 ps 2 lc rgb \'black\',\\"<< std::endl;
+    for (size_t iNeuron = 0; iNeuron < config.neurons - 1; iNeuron++) {
+        filePreTrain << "      \"" << config.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1
                << "  pt 7 ps 5 lc rgb \'orange\',\\"<< std::endl;
-        filePreTrain << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
+        filePreTrain << "      \"" << config.weightFileName <<"\" index(i-1) using " 
                <<  (iNeuron+1)*3 - 2 << ":" << (iNeuron+1)*3 - 1 << ":" << (iNeuron+1)*3
                << "  with labels,\\"<< std::endl;
     }
-    filePreTrain << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
-           <<  (netConfig.neurons)*3 - 2 << ":" << (netConfig.neurons)*3 - 1
+    filePreTrain << "      \"" << config.weightFileName <<"\" index(i-1) using " 
+           <<  (config.neurons)*3 - 2 << ":" << (config.neurons)*3 - 1
            << "  pt 7 ps 5 lc rgb \'orange\',\\"<< std::endl;
-    filePreTrain << "      \"" << netConfig.weightFileName <<"\" index(i-1) using " 
-           <<  (netConfig.neurons)*3 - 2 << ":" << (netConfig.neurons)*3 - 1 << ":" << (netConfig.neurons)*3
+    filePreTrain << "      \"" << config.weightFileName <<"\" index(i-1) using " 
+           <<  (config.neurons)*3 - 2 << ":" << (config.neurons)*3 - 1 << ":" << (config.neurons)*3
            << "  with labels\\"<< std::endl;
     filePreTrain << "}" << std::endl;
 
