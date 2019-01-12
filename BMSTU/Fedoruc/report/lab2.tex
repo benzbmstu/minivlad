@@ -15,8 +15,8 @@
 
 Каждый конкурирующий нейрон в группе получает одни и те же входные сигналы. Каждый нейрон рассчитывает выходной сигнал своего сумматора обычным образом:
 
-\begin{equation}\label{eq:minFunc}
-	u_i=\sum\limits_{j=0}^N w_{ij}*x_j.
+\begin{equation}\label{eq:Func}
+	u_i=\sum\limits_{j=0}^N w_{ij} x_j.
 \end{equation}
 
 \begin{itemize}
@@ -26,7 +26,7 @@
 Для обучения нейронов типа WTA не требуется учитель, оно практически полностью аналогично обучению инстара Гроссберга. Начальные значения весовых коэффициентов всех нейронов выбираются случайным образом с последующей нормализацией относительно 1.
 При предъявлении каждого обучающего вектора $X^k$ определяется нейрон-победитель, что дает ему право уточнить свои весовые коэффициенты по упрощенному (в силу бинарности $y_i$) правилу Гроссберга:
 
-\begin{equation}\label{eq:minFunc}
+\begin{equation}\label{eq:Func}
     w_{ij}(t+1)=w_{ij}(t)+\eta(x_j^k-w_{ij}(t)).
 \end{equation}
 Все проигравшие нейроны оставляют свои весовые коэффициенты неизменными. 
@@ -36,305 +36,173 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
---------------------------------------------------------------------------------------------------------------------------------
-
-
-Выходной сигнал нейрона может принимать только два значения {0, 1} по следующему правилу:
-
-\begin{equation}\label{eq:system}
-		\begin{aligned}
-  			& y_i = f(u_i)=1, если u_i>=0, \\
-  			& y_i = f(u_i)=0, если u_i<0.
-		\end{aligned}  		
+Понятие «близости» двух векторов можно продемонстрировать на следующем примере. Пусть на очередной итерации обучения сети в режиме «онлайн» имеется входной вектор $X^k$. Тогда вычисление взвешенной суммы для i-го нейрона осуществляется по формуле:
+\begin{equation}\label{eq:sum_func}
+    u _ { i } = W _ { i } ^ { T } \cdot X ^ { k } = \sum _ { j = 1 } ^ { N } w _ { i j } \cdot x _ { j } ^ { k } = \left\| W _ { i } ^ { T } \right\| \cdot \left\| X ^ { k } \right\| \cdot \cos \left( \sphericalangle   W _ { i } , X ^ { k } \right)
 \end{equation}
 
-
-Обучение персептрона требует учителя, т.е. множества ${<X^1, d^1_i>, ..., <X^p, d^p_i>}$ пар $<вектор входных сигналов X^k, ожидаемое значение выходного сигнала d^k_i>$. Обучение (отыскание весовых коэффициентов $w_{ij}$) сводится к задаче минимизации целевой функции:
-
-\begin{equation}\label{eq:minFunc}
-	E(W_i)=\dfrac{1}{2}\sum\limits_{k=1}^p(y^k_i-d^k_i)^2.
-\end{equation}
-
-К сожалению, для персептрона в силу разрывности функции $f(u_i)$ для отыскания минимума $E(W_i)$ применимы методы оптимизации только нулевого порядка.
-
-На практике для обучения персептрона чаще всего используется правило персептрона, представляющее собой следующий простой алгоритм:
-
-\begin{itemize}
-\item Выбираются (как правило, случайно) начальные значения весов $w_{ij} (j=0, 1, 2, ..., N)$ нейрона.
-
-\item Для каждой обучающей пары $<X^k, d^k_i>$ выполняется ряд циклов (их номера обозначим через $t$) уточнения значений входных весов по формуле
-\begin{equation}
-  w_{ij}(t+1) = w_{ij}(t) + \Delta w_{ij}(t),
-\end{equation}
-где
-\begin{equation}\label{eq:system}
-	\begin{aligned}
-	& \Delta w_{ij}(t)=0, если y_i(t)=d^k_i; \\
-	& \Delta w_{ij}(t)=x^k_j, если y_i(t)=0, а d^k_i=1; \\
-	& \Delta w_{ij}(t)=-x^k_j, если y_i(t)=1, а d^k_i=0. 
-	\end{aligned}  		
-\end{equation}
-
-\item Процесс обработки текущей обучающей пары завершается:
-	\begin{enumerate}
-	\item[] либо а) на цикле, в котором все $\Delta w_{ij}(t)=0$ ,
-	\item[] либо б) после достижения предельного количества циклов.
-	\end{enumerate}
-\end{itemize}
-
-Следует отметить, что правило персептрона представляет собой частный случай предложенного много позже универсального правила обучения Видроу-Хоффа:
-\begin{equation}\label{eq:vidHoff}
-  \Delta w_{ij}(t)=x^k_j(d^k_i-y_i(t)).
-\end{equation}
-
-\subsection{Исходные данные}
-
-Обучающие данные для варианта 6 представлены на рисунке \ref{img:data_lab2}.
+Поскольку вектора $W_i$ и $X^k$ нормализованы, то взвешенная сумма i-го нейрона равна косинусу угла между вектором весов и входным вектором. На рис. \ref{img:angle} представлена геометрическая интерпретация. Чем ближе весовой вектор ко входному, тем ближе косинус угла между векторами к 1.
 
 \begin{figure}[H]
 \centering
-\includegraphics[scale=0.5]{data_lab2.png}
-\caption{Данные для обучения варианта 6}
-\label{img:data_lab2}
+\includegraphics[scale=0.5]{angle.png}
+\caption{Геометрическая интерпретация весов нейронов}
+\label{img:angle}
+\end{figure}
+
+В режиме кластеризации при подаче на вход слоя нейронов типа WTA очередного вектора $X^k$ определяется степень его близости к векторам $W_i$ в виде косинусов углов между этими векторами, после чего определяется наиболее «близкий» вектор весов, отвечающий за тот или иной кластер.
+
+Результат обучения слоя нейронов типа WTA на последовательности девяти двухкомпонентных входных векторов ${X^1, X^2, ..., X^9}$ иллюстрирует (рис. \ref{img:wta_teached}). Здесь были выделены три кластера входных векторов $\{X^1, X^8\}$, $\{X^3, X^4, X^5\}$ и $\{X^2, X^6, X^7, X^9\}$. За их распознавание отвечают три нейрона с векторами входных весов $W_1$, $W_2$ и $W_3$ соответственно.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.4]{wta_teached.png}
+\caption{Результат обучения слоя нейронов типа WTA}
+\label{img:wta_teached}
+\end{figure}
+
+Серьезная проблема в использовании нейронов типа WTA — возможность возникновения "мертвых" нейронов, т.е. нейронов, ни разу не победивших в конкурентной борьбе в ходе обучения и поэтому оставшихся в начальном состоянии. Для исключения "ложных" срабатываний в режиме классификации мертвые нейроны после окончания обучения должны быть удалены.
+
+Для уменьшения количества мертвых нейронов (и, следовательно, повышения точности распознавания) используется модифицированное обучение, основанное на учете числа побед нейронов и шрафовании наиболее "зарвавшихся" среди них. Дисквалификация может быть реализована либо назначением порога числа побед, после которого слишком активный нейрон "засыпает" на заданное число циклов обучения, либо искусственным уменьшением величины  пропорционально числу побед.
+
+
+
+\subsection{Исходные данные}
+
+Обучающие данные для варианта 8 представлены на рисунке \ref{img:train_sphere}.
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.6]{train_sphere.png}
+\caption{Данные для обучения варианта 8}
+\label{img:train_sphere}
 \end{figure}
 
 \subsection{Обучение}
 
-Среди точек на рисунке \ref{img:data_lab2} выбраны те, которые принадлежат синей и зеленой областям. Обучение происходит только на этих двух множествах.
+Для обучения были сгенерированы в случайном порядке точки, принадлежашие двум областям (рис. \ref{img:points}, а). После этого вектор входных значений, состоящих из координат точек, был нормализован (рис. \ref{img:points}, б) по формуле:
+\begin{equation}\label{eq:normaFunc}
+	x_{j}\leftarrow\frac{x_{j}}{\sqrt{x_{1}^{2}+x_{2}^{2}+\ldots+x_{N}^{2}}}.
+\end{equation}
 
-Сгенерированные программно обучающие данные выглядят следующим образом:
+%\begin{figure}[h]
+%    \begin{center}
+%        \begin{minipage}[h]{0.48\linewidth}
+%            \includegraphics[width=1\linewidth]{points_nonorma.jpg}
+%            %\caption{Обучающие данные} %% подпись к рисунку
+%            \label{img:points} %% метка рисунка для ссылки на него
+%        \end{minipage}
+%        \hfill 
+%        \begin{minipage}[h]{0.48\linewidth}
+%            \includegraphics[width=1\linewidth]{points.png}
+%            %\caption{Обчающие данные нормализованные}
+%            \label{img:points_norma}
+%        \end{minipage}
+%        \begin{minipage}[h]{1\linewidth}
+%            \centering
+%            \begin{tabular}{p{0.50\linewidth}p{0.40\linewidth}}
+%                %\centering % Обчающие данные после нормализации &
+%                    \caption{Обучающие данные} &
+%                %\centering %Обчающие данные после нормализации \\
+%                    \caption{Обчающие данные после нормализации} \\
+%            \end{tabular}
+%        \end{minipage}
+%    \end{center}
+%\end{figure}
 
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{percPrepData.png}
-\caption{Обучающие данные}
-\label{img:}
+
+\begin{figure}[h]
+    \begin{minipage}[h]{0.49\linewidth}
+        \center{\includegraphics[width=1\linewidth]{points_nonorma.jpg} \\ а)}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[h]{0.49\linewidth}
+        \center{\includegraphics[width=1\linewidth]{points.png} \\ б)}
+    \end{minipage}
+    \caption{Обучающие данные}
+    \label{img:points}
 \end{figure}
 
-Начальные веса принимаются равными 0.1.
 
-Обучение ведется онлайн-методом, то есть минимизация целевой функции \eqref{eq:minFunc} выполняется для каждого входного вектора.
+Оба множнста имеют примерно одинаковое количесво точек. Это сделано, чтобы не допусть паревеса весов в сторону какого-либо из множеств.
 
-Подстройка весов выполняется по правилу Видроу-Хоффа \eqref{eq:vidHoff}.
+Параметры обучения:
+\begin{itemize}
+    \item Размерность входных векторов: 2
+    \item Количество нейронов: 4
+    \item Количество эпох обучения: 2
+    \item Коэффициент обучения $\eta$: 0,1
+    \item Коэффициент штрафа при обучении: 0,01
+    \item Начальные значения весов: (-1, -1) для всех весов
+\end{itemize}
 
-В цикле настройки весов ограничение стоит не только на величину ошибки (которая на текущем шаге должна стать равной 0), но и на количество итераций (задано как 100, хотя на деле больше 2-3 не требуется).
+Обучение проводилось онлайн-методом - корректировка весов проводилась после подачи каджого входного вектора.
 
-Для хорошей классификации выбранных данных достаточно выполнить два прохода по набору обучающих данных, то есть две эпохи.
+Коэффициент штрафа при обучении необходим для решения проблемы «мертвых» нейронов. Для каждого нейрона в слое вводится счетчик побед. Он изменяется на каждой итерации обучения для нейронов-победителей. Считчик используется для коррекции взвешенных сумм нейронов перед процедурой определения нейрона-победителя. Взвешенная сумма каждого нейрона рассчитывается по формуле:
+\begin{equation}\label{eq:penaltyFunc}
+    u _ { i } = \left( \sum _ { j = 1 } ^ { N } w _ { i j } \cdot x _ { j } \right) - p \cdot C_i,
+\end{equation}
+где $C_i, i=1, 2, ..., M$ - счетчик побед, p - коэффициент штрафа при обучении.
 
-После первой эпохи классификация выполняется с ошибкой:
+\subsection{Результат}
 
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{percAfterFirstEpoch.png}
-\caption{Классификация после первой эпохи}
-\label{img:}
+Результат процесса обучения представлен на рис. \ref{img:result}
+
+\begin{figure}[h]
+    \begin{minipage}[h]{0.49\linewidth}
+        \center{\includegraphics[width=1\linewidth]{train0.png} \\ а)}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[h]{0.49\linewidth}
+        \center{\includegraphics[width=1\linewidth]{train6.png} \\ б)}
+    \end{minipage}
+    \caption{a) - нулевое положение, б) - конечный результат}
+    \label{img:result}
 \end{figure}
 
-Результат обучения:
+Сам процесс обучения частично предствлен на рис. \ref{img:teaching}. Из начального положения $(x_1, x_2) = (-1, -1)$ (рис.\ref{img:teaching}, a), значения весов векторов  постепенно выравниваются и достигаю конечнго распределения, как на (рис.\ref{img:result}).
 
 \begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{percAfterSecondEpoch.png}
-\caption{Классификация после второй эпохи}
-\label{img:}
+    \begin{minipage}[h]{0.47\linewidth}
+        \center{\includegraphics[width=1\linewidth]{train1.png} а)}  \\
+    \end{minipage}
+    \hfill
+    \begin{minipage}[h]{0.47\linewidth}
+        \center{\includegraphics[width=1\linewidth]{train11.png} б)} \\
+    \end{minipage}
+    \vfill
+    \begin{minipage}[h]{0.47\linewidth}
+        \center{\includegraphics[width=1\linewidth]{train2.png} в)} \\
+    \end{minipage}
+    \hfill
+    \begin{minipage}[h]{0.47\linewidth}
+        \center{\includegraphics[width=1\linewidth]{train3.png} г)} \\
+    \end{minipage}
+    \vfill
+    \begin{minipage}[h]{0.47\linewidth}
+        \center{\includegraphics[width=1\linewidth]{train4.png} д)}  \\
+    \end{minipage}
+    \hfill
+    \begin{minipage}[h]{0.47\linewidth}
+        \center{\includegraphics[width=1\linewidth]{train5.png} е)} \\
+    \end{minipage}
+    \caption{Процесс обучения}
+    \label{img:teaching}
 \end{figure}
+
 
 \subsection{Иходный код}
 Файл main.cpp
 \begin{verbatim}
-     1  #include <cmath>
-     2  #include <vector>
-     3  #include <fstream>
-     4  #include <iostream>
-     5  #include <algorithm>
-     6
-     7  #include "Perceptron.h"
-     8
-     9  // -----------------------------------------------------------
------------------
-    10  void prepareOutputFile(std::ofstream &file)
-    11  {
-    12      file << "set xrange[" << -4 << ":" << 20 << "]" << std::en
-dl;
-    13      file << "set yrange[" << -4 << ":" << 20 << "]" << std::en
-dl;
-    14      file << "set xlabel 'x1'" << std::endl;
-    15      file << "set ylabel 'x2'" << std::endl;
-    16  }
-    17  // -----------------------------------------------------------
------------------
-    18  std::vector<DataSample>& concat(std::vector<DataSample> &a, st
-d::vector<DataSample> &b)
-    19  {
-    20      a.insert(a.end(), b.begin(), b.end());
-    21      return a;
-    22  }
-    23  // -----------------------------------------------------------
------------------
-    24  void generateEllipsoid(double a, double b, 
-    25                         double x0, double y0, 
-    26                         double angle, double step, 
-    27                         int group,
-    28                         std::vector<DataSample> &dataset,
-    29                         std::ofstream &file)
-    30  {
-    31      angle = -angle; 
-    32      for( double x = x0 - a; x <= x0 + a; x += step){
-    33          for(double y = y0 - b; y <= y0 + b; y += step){
-    34              if(pow(x - x0, 2)/pow(a, 2) + pow(y - y0, 2)/pow(b
-, 2) <= 1){
-    35                  double xEllispe = (x)*cos(angle) + (y)*sin(ang
-le);
-    36                  double yEllispe = -(x)*sin(angle) + (y)*cos(an
-gle);
-    37                  DataSample set = {{xEllispe, yEllispe}, group}
-;
-    38                  dataset.push_back(set);
-    39                  file << xEllispe << "\t" << yEllispe << std::e
-ndl;
-    40              }
-    41          }
-    42      }
-    43      return ;
-    44  }
-    45  // -----------------------------------------------------------
------------------
-    46  int main()
-    47  {
-    48      std::ofstream left("left.txt");
-    49      std::ofstream centre("centre.txt");
-    50      std::ofstream right("right.txt");
-    51
-    52      std::vector<DataSample> setA, setB, setC;
-    53      generateEllipsoid(3, 3, 10, 0, 0, 1., 0, setA, right);
-    54      generateEllipsoid(3, 3, 0, 10, 0, 1, 0, setB, left);
-    55      generateEllipsoid(6, 3, 12, 0, atan(1.), 1., 1, setC, cent
-re);
-    56
-    57      std::vector<DataSample> dataset = concat(setB, setC);
-    58
-    59      std::ofstream file("output.txt");
-    60      prepareOutputFile(file);
-    61
-    62      Perceptron neuron(dataset);
-    63      neuron.train(file);
-    64
-    65      return 0;
-    66  }
+
 \end{verbatim}
 
-Файл Perceptron.h
+Файл WTA.h
 \begin{verbatim}
-     1  #ifndef NEURON_PERCEPTRON_H
-     2  #define NEURON_PERCEPTRON_H
-     3
-     4  #include <vector>
-     5  #include <fstream>
-     6
-     7
-     8  struct DataSample {
-     9      std::vector<double> X;
-    10      int y;
-    11  };
-    12
-    13  class Perceptron {
-    14  protected:
-    15      std::vector<double>         m_weights;
-    16      std::vector<DataSample> m_dataset;
-    17  public:
-    18          Perceptron() {};
-    19      Perceptron(std::vector<DataSample> &dataset): m_dataset(da
-taset) {};
-    20      ~Perceptron() {};
-    21      void train(std::ofstream &file);
-    22          void updateOutputFile(std::ofstream &file, std::vector
-<double> &weights);
-    23  };
-    24
-    25  int heaviside(double x);
-    26  #endif
+     
 \end{verbatim}
 
-Файл Perceptron.cpp
+Файл WTA.cpp
 \begin{verbatim}
-     1  #include <cmath>
-     2  #include <fstream>
-     3  #include <iostream>
-     4  #include <algorithm>
-     5
-     6  #include "Perceptron.h"
-     7
-     8  void Perceptron::train(std::ofstream &file) {
-     9      unsigned int epoch;
-    10      m_weights = std::vector<double>(m_dataset.front().X.size()
- + 1, 0.1);
-    11      updateOutputFile(file, m_weights);
-    12      for (epoch = 0; epoch < 2; epoch++) {
-    13          std::random_shuffle(m_dataset.begin(), m_dataset.end()
-);
-    14          for (auto set : m_dataset) {
-    15              std::vector<double> X = set.X;
-    16              X.insert(X.begin(), 1.);
-    17              bool errors = true; 
-    18              for (int iterCounter = 0; iterCounter < 100 && err
-ors; iterCounter++) {  
-    19                  errors = false;
-    20                  double weightedSum = 0.; //m_weights * X; 
-    21                  for (int i = 0; i < m_weights.size(); i++) {
-    22                          weightedSum += m_weights[i] * X[i];
-    23                  }          
-    24                  double y = heaviside(weightedSum);
-    25                  for (auto itX : (X)) {
-    26                      if (itX*(set.y - y)) {
-    27                          errors = true;
-    28                      }
-    29                  }
-    30                  if (errors) {
-    31                      for (int i = 0; i < m_weights.size(); i++)
- {
-    32                          m_weights[i] = m_weights[i] + X[i]*(se
-t.y - y);
-    33                      }            
-    34                      updateOutputFile(file, m_weights);
-    35                  }
-    36              }
-    37              updateOutputFile(file, m_weights);
-    38          }
-    39      }
-    40  }
-    41  // -----------------------------------------------------------
------------------
-    42  void Perceptron::updateOutputFile(std::ofstream &file, std::ve
-ctor<double> &weights)
-    43  {
-    44      file << "plot (" << -weights[0] / weights[2] << ") + (" <<
- -weights[1] / weights[2] << ") * x, \\" << std::endl;
-    45      file << "'centre.txt' using 1:2 w p lt rgb 'green', \\" <<
- std::endl;
-    46      file << "'left.txt' using 1:2 w p lt rgb 'blue', \\" << st
-d::endl;
-    47      file << "'right.txt' using 1:2 w p lt rgb 'red'" << std::e
-ndl;
-    48      file << "pause 0.1" << std::endl;
-    49  }
-    50  // -----------------------------------------------------------
------------------
-    51  int heaviside(double x) {
-    52      return x < 0 ? 0 : 1;
-    53  }
-    54
+    
 \end{verbatim}

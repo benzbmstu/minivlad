@@ -4,6 +4,30 @@
 
 Ферзь находится на поле A1 шахматной доски. Необходимо найти замкнутый маршрут из 14 ходов, обеспечивающий прохождение всех полей доски. При этом любые поля допускается проходить более одного раза.
 
+\subsection{Результат}
+\begin{verbatim}
+    ?- [ferz].
+    true.
+
+    ?- run
+    |    .
+    Путь: [1,1,8,1,8,8,2,2,8,2,2,8,2,4,6,8,3,8,7,4,7,8,2,3,6,3,1,8,1,1]
+    Путь: [1,1,8,1,8,8,3,3,7,3,2,8,2,4,6,8,3,8,7,4,7,8,1,2,7,2,1,8,1,1]
+    Готово.
+    true.
+\end{verbatim}
+
+Получено два варинта маршрута:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{way1.jpeg}
+\caption{Маршрут 1}
+\includegraphics[scale=0.51]{way2.jpeg}
+\caption{Маршрут 2}
+\label{img:ways}
+\end{figure}
+
 \subsection{Иходный код}
 \begin{verbatim}
      1	gen_desk(_,0,[]):-!.
@@ -53,26 +77,4 @@
     45		gen_desk(0,J,D):- J>0, J1 is J - 1, gen_desk(8, J1, D),!.
     46		gen_desk(I,J,[c(I,J,n) | D]) :- I>0, I1 is I-1, gen_desk(I1, J, D). 
 \end{verbatim}
-\subsection{Результат}
-\begin{verbatim}
-    ?- [ferz].
-    true.
 
-    ?- run
-    |    .
-    Путь: [1,1,8,1,8,8,2,2,8,2,2,8,2,4,6,8,3,8,7,4,7,8,2,3,6,3,1,8,1,1]
-    Путь: [1,1,8,1,8,8,3,3,7,3,2,8,2,4,6,8,3,8,7,4,7,8,1,2,7,2,1,8,1,1]
-    Готово.
-    true.
-\end{verbatim}
-
-Получено два варинта маршрута:
-
-\begin{figure}[H]
-\centering
-\includegraphics[scale=0.5]{way1.jpeg}
-\caption{Маршрут 1}
-\includegraphics[scale=0.51]{way2.jpeg}
-\caption{Маршрут 2}
-\label{img:ways}
-\end{figure}
