@@ -6,90 +6,73 @@
 
 \subsection{Иходный код}
 \begin{verbatim}
-     1  %?- target(S1,S2,S3,S4,S5).
-     2  %create list of fields between X/Y and X1/Y1
-     3  range(X/Y, X/Y, [X/Y]).
-     4  range(X/Y, X1/Y1, [X/Y|T]):- X<X1, Y<Y1, X2 is X+1, Y2 is Y+1, range(X2/
-Y2, X1/Y1, T).
-     5  range(X/Y, X1/Y1, [X/Y|T]):- X<X1, Y>Y1, X2 is X+1, Y2 is Y-1, range(X2/
-Y2, X1/Y1, T).
-     6  range(X/Y, X1/Y1, [X/Y|T]):- X>X1, Y<Y1, X2 is X-1, Y2 is Y+1, range(X2/
-Y2, X1/Y1, T).
-     7  range(X/Y, X1/Y1, [X/Y|T]):- X>X1, Y>Y1, X2 is X-1, Y2 is Y-1, range(X2/
-Y2, X1/Y1, T).
-     8  range(X/Y, X1/Y1, [X/Y|T]):- X=X1, Y<Y1, X2 is X,   Y2 is Y+1, range(X2/
-Y2, X1/Y1, T).
-     9  range(X/Y, X1/Y1, [X/Y|T]):- X=X1, Y>Y1, X2 is X,   Y2 is Y-1, range(X2/
-Y2, X1/Y1, T).
-    10  range(X/Y, X1/Y1, [X/Y|T]):- X<X1, Y=Y1, X2 is X+1, Y2 is Y,   range(X2/
-Y2, X1/Y1, T).
-    11  range(X/Y, X1/Y1, [X/Y|T]):- X>X1, Y=Y1, X2 is X-1, Y2 is Y,   range(X2/
-Y2, X1/Y1, T).
-    12   
-    13  %check whether X/Y is on board
-    14  onboard(X/Y) :-
-    15     0 < X, X < 9, 0 < Y, Y < 9.
-    16   
-    17  %integer is direction number (1-8), N is distance
-    18  step(X/Y, X1/Y1, 1, N) :- X1 is X,     Y1 is Y + N, onboard(X/Y), onboar
-d(X1/Y1).
-    19  step(X/Y, X1/Y1, 2, N) :- X1 is X,     Y1 is Y - N, onboard(X/Y), onboar
-d(X1/Y1).
-    20  step(X/Y, X1/Y1, 3, N) :- X1 is X + N, Y1 is Y,     onboard(X/Y), onboar
-d(X1/Y1).
-    21  step(X/Y, X1/Y1, 4, N) :- X1 is X - N, Y1 is Y,     onboard(X/Y), onboar
-d(X1/Y1).
-    22  step(X/Y, X1/Y1, 5, N) :- X1 is X + N, Y1 is Y + N, onboard(X/Y), onboar
-d(X1/Y1).
-    23  step(X/Y, X1/Y1, 6, N) :- X1 is X + N, Y1 is Y - N, onboard(X/Y), onboar
-d(X1/Y1).
-    24  step(X/Y, X1/Y1, 7, N) :- X1 is X - N, Y1 is Y + N, onboard(X/Y), onboar
-d(X1/Y1).
-    25  step(X/Y, X1/Y1, 8, N) :- X1 is X - N, Y1 is Y - N, onboard(X/Y), onboar
-d(X1/Y1).
-    26   
-    27  %8 directions are available
-    28  direction(1).
-    29  direction(2).
-    30  direction(3).
-    31  direction(4).
-    32  direction(5).
-    33  direction(6).
-    34  direction(7).
-    35  direction(8).
-    36   
-    37  %list all step variants
-    38  variants([]).
-    39  variants([H|T]) :-
-    40     direction(H),
-    41     variants(T).
-    42   
-    43  %N is distance
-    44  %S is list of crossed fields
-    45  queenstep(X/Y, X1/Y1, N, S):-
-    46     variants([M,N]),
-    47     step(X/Y, X1/Y1, M, N),
-    48     range(X/Y, X1/Y1, S).
-    49   
-    50  uniq(Data,Uniques) :- sort(Data,Uniques).
-    51   
-    52  queenpath(X/Y, X1/Y1, X2/Y2, X3/Y3, X4/Y4, X5/Y5, L, S):-
-    53     queenstep(X/Y,   X1/Y1, DL1, S1),
-    54     queenstep(X1/Y1, X2/Y2, DL2, S2),
-    55     queenstep(X2/Y2, X3/Y3, DL3, S3),
-    56     queenstep(X3/Y3, X4/Y4, DL4, S4),
-    57     queenstep(X4/Y4, X5/Y5, DL5, S5),
-    58     L is DL1+DL2+DL3+DL4+DL5,
-    59     append(S1, S2, T1),
-    60     append(T1, S3, T2),
-    61     append(T2, S4, T3),
-    62     append(T3, S5, S6),
-    63     uniq(S6, S),
-    64     length(S, LTmp),
-    65     LCalc is LTmp - 1,
-    66     L = LCalc.
-    67   
-    68  target(X1/Y1, X2/Y2, X3/Y3, X4/Y4, X5/Y5):-
-    69     queenpath(4/1, X1/Y1, X2/Y2, X3/Y3, X4/Y4, X5/Y5, 15, _).
-    70
+     1	gen_desk(_,0,[]):-!.
+     2	gen_desk(0,J,D):- J>0, J1 is J - 1, gen_desk(8, J1, D),!.
+     3	gen_desk(I,J,[c(I,J,n) | D]) :- I>0, I1 is I-1, gen_desk(I1, J, D). 
+     4	
+     5	direction([],1):-!.
+     6	direction([1],3):-!.
+     7	direction([I|_],I1):- I1 is (I+3) mod 8.
+     8	
+     9	isEnd([]):-!.
+    10	isEnd([c(_,_,y)|Desk]):-isEnd(Desk).
+    11	
+    12	nCoord(X,Y,X1,Y1, 0):-X<8,Y>1,X1 is X+1, Y1 is Y - 1,!.
+    13	nCoord(X,Y,X1,Y,1):-X<8,X1 is X+1,!.
+    14	nCoord(X,Y,X1,Y1,2):-X<8,Y<8,X1 is X+1, Y1 is Y+1,!.
+    15	nCoord(X,Y,X,Y1,3):-Y<8,Y1 is Y+1,!.
+    16	nCoord(X,Y,X1, Y1,4):-X>1,Y<8,X1 is X-1, Y1 is Y+1,!.
+    17	nCoord(X,Y,X1, Y,5):-X>1,X1 is X-1,!.
+    18	nCoord(X,Y,X1, Y1, 6):-X>1,Y>1,X1 is X-1, Y1 is Y-1,!.
+    19	nCoord(X,Y,X,Y1, 7):-Y>1,Y1 is Y-1,!.
+    20	
+    21	broken(1,1,[],_,Desk):-isEnd(Desk).
+    22	broken(X,Y,[X1,Y1|Broken],Dir,Desk):-
+    23	    direction(Dir,NDir),
+    24	    line(X,Y,X1,Y1,NDir,Desk,Desk1,L),
+    25		L>2,
+    26		broken(X1,Y1,Broken,[NDir|Dir],Desk1).
+    27	
+    28	line(X,Y,X0,Y0,Dir,Desk,Desk0,IJ):-
+    29		nCoord(X,Y,X1,Y1,Dir),
+    30	    mark(X1,Y1,Desk,Desk1,J),
+    31	    line(X1,Y1,X0,Y0,Dir,Desk1,Desk0,I),
+    32		IJ is I + J.
+    33	line(X,Y,X,Y,_,Desk,Desk,0).
+    34	
+    35	mark(X,Y,[c(X,Y,n)|Desk],[c(X,Y,y)|Desk],1):-!.
+    36	mark(X,Y,[c(X,Y,y)|Desk],[c(X,Y,y)|Desk],0):-!.
+    37	mark(X,Y,[Cell|Desk],[Cell|Desk1],I):-mark(X,Y,Desk,Desk1,I).
+    38	
+    39	run :-
+    40		gen_desk(8,8,Desk),
+    41		broken(1,1,Broken,[],Desk),
+    42		format('Путь: ~w~n', [[1,1|Broken]]),
+    43		fail;
+    44		write('Готово.').gen_desk(_,0,[]):-!.
+    45		gen_desk(0,J,D):- J>0, J1 is J - 1, gen_desk(8, J1, D),!.
+    46		gen_desk(I,J,[c(I,J,n) | D]) :- I>0, I1 is I-1, gen_desk(I1, J, D). 
 \end{verbatim}
+\subsection{Результат}
+\begin{verbatim}
+    ?- [ferz].
+    true.
+
+    ?- run
+    |    .
+    Путь: [1,1,8,1,8,8,2,2,8,2,2,8,2,4,6,8,3,8,7,4,7,8,2,3,6,3,1,8,1,1]
+    Путь: [1,1,8,1,8,8,3,3,7,3,2,8,2,4,6,8,3,8,7,4,7,8,1,2,7,2,1,8,1,1]
+    Готово.
+    true.
+\end{verbatim}
+
+Получено два варинта маршрута:
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{way1.jpeg}
+\caption{Маршрут 1}
+\includegraphics[scale=0.51]{way2.jpeg}
+\caption{Маршрут 2}
+\label{img:ways}
+\end{figure}
