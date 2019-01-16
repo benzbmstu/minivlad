@@ -1,3 +1,4 @@
+\newpage
 \section{Лабораторная работа 3 (вариант 5-8)}
 
 \subsection{Задание}
@@ -142,11 +143,21 @@
 \begin{equation}\label{eq:penaltyFunc}
     u _ { i } = \left( \sum _ { j = 1 } ^ { N } w _ { i j } \cdot x _ { j } \right) - p \cdot C_i,
 \end{equation}
-где $C_i, i=1, 2, ..., M$ - счетчик побед, p - коэффициент штрафа при обучении.
+где $C_i, i=1, 2, ..., M$ - счетчик побед, p - коэффициент штрафа при обучении.\\
+%\vspace{\baselineskip}
+~\\
+  У WTA-нейрона нет понятия расстояния до входного вектора в отличие от самоорганизующихся сетей, построенных на WTA-нейронах. Определение победителя происходит исключительно по величине значения взвешенной суммы. То есть, у победителя она оказывается максимальной после предъявления очередного вектора обучения на слой. Только потом уже корректируется вес у этого нейрона-победителя по формеле \ref{eq:Func}. Но, чтобы дать возможность победить другим нейронам, нужно штрафовать победителя слудуюшими способами:
+
+\begin{enumerate} 
+  \item Уменьшить взвешенную сумму нейрона-победителя, чтобы при сравнении  взвешенных сумм всех нейронов, она оказалась меньше, чем могла бы быть.
+  \item Ввести какой-либо коэффициент, отражающий количество подряд идущих побед нейрона. По предельному значению замораживать его на несколько циклов обучения.
+\end{enumerate}
+%\vspace{\baselineskip}
+В рамках данной лаботароной работы был реализовани первый варинт.
 
 \subsection{Результат}
 
-Результат процесса обучения представлен на рис. \ref{img:result}
+Результат процесса обучения представлен на рис. \ref{img:result}. Из начального положения $(x_1, x_2) = (-1, -1)$ (рис.\ref{img:result}, a), значения весов векторов постепенно выравниваются и достигаю конечнго распределения, как на рис.\ref{img:result}, б). Сам процесс обучения частично предствлен на рис. \ref{img:teaching}.
 
 \begin{figure}[h]
     \begin{minipage}[h]{0.49\linewidth}
@@ -160,30 +171,28 @@
     \label{img:result}
 \end{figure}
 
-Сам процесс обучения частично предствлен на рис. \ref{img:teaching}. Из начального положения $(x_1, x_2) = (-1, -1)$ (рис.\ref{img:teaching}, a), значения весов векторов  постепенно выравниваются и достигаю конечнго распределения, как на (рис.\ref{img:result}).
-
 \begin{figure}[H]
-    \begin{minipage}[h]{0.47\linewidth}
+    \begin{minipage}[h]{0.4\linewidth}
         \center{\includegraphics[width=1\linewidth]{train1.png} а)}  \\
     \end{minipage}
     \hfill
-    \begin{minipage}[h]{0.47\linewidth}
+    \begin{minipage}[h]{0.4\linewidth}
         \center{\includegraphics[width=1\linewidth]{train11.png} б)} \\
     \end{minipage}
     \vfill
-    \begin{minipage}[h]{0.47\linewidth}
+    \begin{minipage}[h]{0.4\linewidth}
         \center{\includegraphics[width=1\linewidth]{train2.png} в)} \\
     \end{minipage}
     \hfill
-    \begin{minipage}[h]{0.47\linewidth}
+    \begin{minipage}[h]{0.4\linewidth}
         \center{\includegraphics[width=1\linewidth]{train3.png} г)} \\
     \end{minipage}
     \vfill
-    \begin{minipage}[h]{0.47\linewidth}
+    \begin{minipage}[h]{0.4\linewidth}
         \center{\includegraphics[width=1\linewidth]{train4.png} д)}  \\
     \end{minipage}
     \hfill
-    \begin{minipage}[h]{0.47\linewidth}
+    \begin{minipage}[h]{0.4\linewidth}
         \center{\includegraphics[width=1\linewidth]{train5.png} е)} \\
     \end{minipage}
     \caption{Процесс обучения}
