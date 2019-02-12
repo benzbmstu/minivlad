@@ -1,0 +1,42 @@
+\documentclass[a4paper,12pt]{article} %размер бумаги устанавливаем А4, шрифт 12пунктов
+\usepackage[T2A]{fontenc}
+\usepackage[utf8]{inputenc}	%кодировка
+\usepackage[english, russian]{babel}%используем русский и английский языки с переносами
+\usepackage{amssymb, amsfonts, amsmath, cite, enumerate, float, indentfirst} %пакеты расширений
+\usepackage{graphicx}
+\usepackage{alltt}
+%\usepackage[dvips]{graphicx} %вставка графики
+\graphicspath{{images/}}%путь к рисункам
+%%% Дополнительная работа с математикой
+\usepackage{amsmath,amsfonts,amssymb,amsthm,mathtools} % AMS
+\usepackage{icomma} % "Умная" запятая: $0,2$ --- число, $0, 2$ --- перечисление
+\mathtoolsset{showonlyrefs=true} % Показывать номера только у тех формул, на которые есть \eqref{} в тексте.
+
+
+% в преамбуле
+\usepackage{longtable} 
+\usepackage{array}
+
+\renewcommand{\arraystretch}{1.5} % циферкой регулируется высота
+
+\makeatletter
+\renewcommand{\@biblabel}[1]{#1.} % Заменяем библиографию с квадратных скобок на точку:
+\makeatother
+
+\usepackage{geometry} % Меняем поля страницы
+\geometry{left=2cm}% левое поле
+\geometry{right=1.5cm}% правое поле
+\geometry{top=1cm}% верхнее поле
+\geometry{bottom=2cm}% нижнее поле
+
+\begin{document}
+РАЗРАБОТКА ИНФРАСТРУКТУРЫ АВТОМАТИЧЕСКОГО РАЗВЕРТЫВАНИЯ, ТЕСТИРОВАНИЯ И ОБСЛУЖИВАНИЯ СЕРВЕРНЫХ КОМПОНЕНТОВ ИНФОРМАЦИОННЫХ СИСТЕМ
+\tableofcontents
+\newpage
+\input{intro.tex}
+\newpage
+\input{model.tex}
+\newpage
+\input{automation.tex}
+
+\end{document}
