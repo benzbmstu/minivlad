@@ -1,0 +1,41 @@
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+    body {
+	background:
+        /* top, transparent black, faked with gradient */ 
+        linear-gradient( 
+        rgba(0, 0, 0, 0.7), 
+        rgba(0, 0, 0, 0.7) 
+        ), 
+        /* bottom, image */ 
+        url('back.jpg');
+    }
+    button.knopka {
+        color: #fff; 
+        background: #FFA500; 
+        padding: 5px; 
+        border-radius: 5px;
+        border: 2px solid #FF8247;
+    } 
+    button.knopka:hover { 
+        background: #FF6347; 
+    }
+</style>
+</head>
+<body>
+    <!--    
+    <button class="knopka">
+        <a href="http://local.test/py">Получить ответ от pyserver!</a>
+    </button>
+    -->
+
+    <form action="http://local.test/py">
+        <input type="submit" value="Получить ответ от pyServer" />
+    </form>
+    <form action="http://local.test/cpp">
+        <input type="submit" value="Получить ответ от cppServer" />
+    </form>
+</body>
+</html>
